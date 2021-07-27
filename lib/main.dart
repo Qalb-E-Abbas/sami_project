@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sami_project/common/AppColors.dart';
-import 'package:sami_project/screens/AuthScreens/teacher_registration.dart';
+import 'package:sami_project/screens/AuthScreens/student_registration.dart';
 
 import 'application/app_state.dart';
 import 'application/errorStrings.dart';
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           scaffoldBackgroundColor:
               AppColors().colorFromHex(context, '#FFFFFF')),
-      home: TeacherRegistration(),
+      home: StudentRegistration(),
     );
   }
 }
