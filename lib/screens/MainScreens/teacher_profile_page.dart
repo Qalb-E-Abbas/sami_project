@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:localstorage/localstorage.dart';
 import 'package:sami_project/common/AppColors.dart';
+import 'package:sami_project/common/back_end_configs.dart';
+import 'package:sami_project/infrastructure/models/teacherModel.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -8,71 +11,103 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-
   bool _isOpen = false;
   PanelController _panelController = PanelController();
-
+  final LocalStorage storage = new LocalStorage(BackEndConfigs.loginLocalDB);
+  TeacherModel teacherModel = TeacherModel();
+  bool initialized = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          FractionallySizedBox(
-            alignment: Alignment.topCenter,
-            heightFactor: 0.7,
-            child: Container(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/user.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
+        body: FutureBuilder(
+            future: storage.ready,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (!initialized) {
+                var items =
+                    storage.getItem(BackEndConfigs.teacherDetailsLocalStorage);
 
-          FractionallySizedBox(
-            alignment: Alignment.bottomCenter,
-            heightFactor: 0.3,
-            child: Container(
-              color: Colors.white,
-            ),
-          ),
-
-          /// Sliding Panel
-          SlidingUpPanel(
-            controller: _panelController,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(32),
-              topLeft: Radius.circular(32),
-            ),
-            minHeight: MediaQuery.of(context).size.height * 0.35,
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-            body: GestureDetector(
-              onTap: () => _panelController.close(),
-              child: Container(
-                color: Colors.transparent,
-              ),
-            ),
-            panelBuilder: (ScrollController controller) =>
-                _panelBody(controller),
-            onPanelSlide: (value) {
-              if (value >= 0.2) {
-                if (!_isOpen) {
-                  setState(() {
-                    _isOpen = true;
-                  });
+                if (items != null) {
+                  print(items);
+                  teacherModel = TeacherModel(
+                    email: items['email'],
+                    name: items['name'],
+                    subjectName: items['subjectName'],
+                    hourlyRate: items['hourlyRate'],
+                    location: items['location'],
+                    bio: items['bio'],
+                    contactNo: items['contactNo'],
+                    exp: items['exp'],
+                    image: items['image'],
+                  );
                 }
+
+                initialized = true;
               }
-            },
-            onPanelClosed: () {
-              setState(() {
-                _isOpen = false;
-              });
-            },
+              return snapshot.data == null
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : _getUI(context);
+            }));
+  }
+
+  Widget _getUI(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        FractionallySizedBox(
+          alignment: Alignment.topCenter,
+          heightFactor: 0.7,
+          child: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(teacherModel.image),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ],
-      ),
+        ),
+
+        FractionallySizedBox(
+          alignment: Alignment.bottomCenter,
+          heightFactor: 0.3,
+          child: Container(
+            color: Colors.white,
+          ),
+        ),
+
+        /// Sliding Panel
+        SlidingUpPanel(
+          controller: _panelController,
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(32),
+            topLeft: Radius.circular(32),
+          ),
+          minHeight: MediaQuery.of(context).size.height * 0.35,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          body: GestureDetector(
+            onTap: () => _panelController.close(),
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
+          panelBuilder: (ScrollController controller) => _panelBody(controller),
+          onPanelSlide: (value) {
+            if (value >= 0.2) {
+              if (!_isOpen) {
+                setState(() {
+                  _isOpen = true;
+                });
+              }
+            }
+          },
+          onPanelClosed: () {
+            setState(() {
+              _isOpen = false;
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -101,7 +136,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-
           Container(
             height: 300,
             width: double.infinity,
@@ -110,56 +144,40 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-
-
                   Text(
                     'Bio:',
-                    style: TextStyle(
-                        fontSize: 20
-                    ),
+                    style: TextStyle(fontSize: 20),
                   ),
-
-                  SizedBox(height: 8,),
-
-                  customContainer('I have done my BS from KUST, and went to NUST for MS.'),
-
-                  SizedBox(height: 10,),
-
-
+                  SizedBox(
+                    height: 8,
+                  ),
+                  customContainer(teacherModel.bio),
+                  SizedBox(
+                    height: 10,
+                  ),
                   Text(
                     'Contact No:',
-                    style: TextStyle(
-                        fontSize: 20
-                    ),
+                    style: TextStyle(fontSize: 20),
                   ),
-
-                  SizedBox(height: 8,),
-
-                  customContainer('03348605042'),
-
-                  SizedBox(height: 10,),
-
-
+                  SizedBox(
+                    height: 8,
+                  ),
+                  customContainer(teacherModel.contactNo),
+                  SizedBox(
+                    height: 10,
+                  ),
                   Text(
                     'Experience:',
-                    style: TextStyle(
-                        fontSize: 20
-                    ),
+                    style: TextStyle(fontSize: 20),
                   ),
-                  SizedBox(height: 5,),
-
-                  customContainer('3 years'),
-
-
-
-
+                  SizedBox(
+                    height: 5,
+                  ),
+                  customContainer('${teacherModel.exp} years'),
                 ],
               ),
             ),
           )
-
-
         ],
       ),
     );
@@ -174,15 +192,18 @@ class _ProfilePageState extends State<ProfilePage> {
           visible: !_isOpen,
           child: Expanded(
             child: OutlineButton(
-              onPressed: () => _panelController.open(),
-              borderSide: BorderSide(color:  AppColors().colorFromHex(context, '#3B7AF8')),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              child: Text('VIEW PROFILE',  style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),)
-            ),
+                onPressed: () => _panelController.open(),
+                borderSide: BorderSide(
+                    color: AppColors().colorFromHex(context, '#3B7AF8')),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                child: Text(
+                  'VIEW PROFILE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )),
           ),
         ),
         Visibility(
@@ -200,7 +221,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   : double.infinity,
               child: FlatButton(
                 onPressed: () => print('Message tapped'),
-                color:  AppColors().colorFromHex(context, '#3B7AF8'),
+                color: AppColors().colorFromHex(context, '#3B7AF8'),
                 textColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
@@ -230,13 +251,14 @@ class _ProfilePageState extends State<ProfilePage> {
           height: 40,
           color: Colors.grey,
         ),
-        _infoCell(title: 'Hourly Rate', value: "\$65"),
+        _infoCell(
+            title: 'Hourly Rate', value: "PKR ${teacherModel.hourlyRate}"),
         Container(
           width: 1,
           height: 40,
           color: Colors.grey,
         ),
-        _infoCell(title: 'Location', value: 'Kohat'),
+        _infoCell(title: 'Location', value: teacherModel.location),
       ],
     );
   }
@@ -271,7 +293,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       children: <Widget>[
         Text(
-          'Qalb E Abbas',
+          teacherModel.name ?? "",
           style: TextStyle(
             fontFamily: 'NimbusSanL',
             fontWeight: FontWeight.w700,
@@ -282,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
           height: 8,
         ),
         Text(
-          'Computer Scientist',
+          teacherModel.subjectName ?? "",
           style: TextStyle(
             fontFamily: 'NimbusSanL',
             fontStyle: FontStyle.italic,
@@ -293,8 +315,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  customContainer(String text){
-    return  Container(
+  customContainer(String text) {
+    return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height,
         minHeight: 50,
@@ -304,14 +326,12 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color:  AppColors().colorFromHex(context, '#3B7AF8')
-          )
+          border:
+              Border.all(color: AppColors().colorFromHex(context, '#3B7AF8'))),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 18),
       ),
-      child: Text(text, style: TextStyle(
-          fontSize: 18
-      ),),
     );
   }
-
 }

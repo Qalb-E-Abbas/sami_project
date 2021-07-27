@@ -1,11 +1,31 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sami_project/common/AppColors.dart';
-import 'package:sami_project/screens/MainScreens/chat_screen.dart';
-import 'package:sami_project/screens/MainScreens/teacher_profile_page.dart';
-import 'package:sami_project/screens/StartupScreens/splash_screen.dart';
+import 'package:sami_project/screens/AuthScreens/teacher_registration.dart';
 
-void main() {
-  runApp(MyApp());
+import 'application/app_state.dart';
+import 'application/errorStrings.dart';
+import 'application/signUpBusinissLogic.dart';
+import 'infrastructure/services/authServices.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => SignUpBusinessLogic()),
+      ChangeNotifierProvider(create: (_) => AppState()),
+      ChangeNotifierProvider(create: (_) => ErrorString()),
+      ChangeNotifierProvider(
+        create: (_) => AuthServices.instance(),
+      ),
+      StreamProvider(
+        create: (context) => context.read<AuthServices>().authState,
+      )
+    ],
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -16,9 +36,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        scaffoldBackgroundColor: AppColors().colorFromHex(context, '#FFFFFF')
-      ),
-      home: ProfilePage(),
+          scaffoldBackgroundColor:
+              AppColors().colorFromHex(context, '#FFFFFF')),
+      home: TeacherRegistration(),
     );
   }
 }

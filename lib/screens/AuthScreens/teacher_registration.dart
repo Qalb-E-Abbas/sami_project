@@ -1,14 +1,27 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:sami_project/common/appButton.dart';
-import 'package:sami_project/common/dynamicFontSize.dart';
+import 'package:loading_overlay/loading_overlay.dart';
+import 'package:provider/provider.dart';
+import 'package:sami_project/application/app_state.dart';
+import 'package:sami_project/application/errorStrings.dart';
+import 'package:sami_project/application/signUpBusinissLogic.dart';
 import 'package:sami_project/common/AppColors.dart';
-import 'package:sami_project/common/vertical_sized_box.dart';
-import 'package:sami_project/common/horizontal_sized_box.dart';
+import 'package:sami_project/common/appButton.dart';
+import 'package:sami_project/common/dialog.dart';
+import 'package:sami_project/common/dynamicFontSize.dart';
+import 'package:sami_project/common/navigation_dialog.dart';
 import 'package:sami_project/common/textfromfield.dart';
-
+import 'package:sami_project/common/vertical_sized_box.dart';
+import 'package:sami_project/infrastructure/models/subjectModel.dart';
+import 'package:sami_project/infrastructure/models/teacherModel.dart';
+import 'package:sami_project/infrastructure/services/authServices.dart';
+import 'package:sami_project/infrastructure/services/uploadFileServices.dart';
+import 'package:sami_project/screens/AuthScreens/login_screen.dart';
 
 class TeacherRegistration extends StatefulWidget {
   const TeacherRegistration({Key key}) : super(key: key);
@@ -18,156 +31,388 @@ class TeacherRegistration extends StatefulWidget {
 }
 
 class _TeacherRegistrationState extends State<TeacherRegistration> {
-
   Completer<GoogleMapController> _completer = Completer();
+  UploadFileServices _uploadFileServices = UploadFileServices();
+  bool isChecked = false;
+  final _formKey = GlobalKey<FormState>();
+  bool isVisible = false;
+  File _file;
+  TextEditingController _emailController = TextEditingController();
 
+  TextEditingController _pwdController = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _qualController = TextEditingController();
+  TextEditingController _confirmPwdController = TextEditingController();
+  TextEditingController _hourlyController = TextEditingController();
+  TextEditingController _contactController = TextEditingController();
+  TextEditingController _expController = TextEditingController();
+  TextEditingController _bioController = TextEditingController();
+  SubjectModel _selectedSubject;
+  List<SubjectModel> _subjectList = [
+    SubjectModel(subjectID: "1", subjectName: "Maths"),
+    SubjectModel(subjectID: "2", subjectName: "Computer"),
+    SubjectModel(subjectID: "3", subjectName: "Physics"),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    AuthServices users = Provider.of<AuthServices>(context);
+    SignUpBusinessLogic signUp = Provider.of<SignUpBusinessLogic>(context);
+    var user = Provider.of<User>(context);
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: LoadingOverlay(
+          isLoading: signUp.status == SignUpStatus.Registering,
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: AssetImage('assets/our-students.png'),
+                            fit: BoxFit.fill)),
+                  ),
+                  VerticalSpace(20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DynamicFontSize(label: 'Name:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'Qalb E Abbas',
+                          controller: _nameController,
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Email:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'qalbeabbas964@gmail.com',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _emailController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Hourly Rate:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'PKR',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _hourlyController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Bio:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'BIO',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _bioController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Contact Number:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'Contact Number',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _contactController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Experience:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'Experience',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _expController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Password:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'Enter Password',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _pwdController,
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(
+                            label: 'Confirm Password:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'Re-enter Password',
+                          controller: _confirmPwdController,
+                          validator: (val) {
+                            if (val.isEmpty) {
+                              return "Field cannot be emtpy";
+                            } else if (_confirmPwdController.text !=
+                                _pwdController.text) {
+                              return "Confirm Password doest not match";
+                            } else {
+                              return null;
+                            }
+                          },
+                        ),
+                        VerticalSpace(10),
+                        DynamicFontSize(label: 'Qualification:', fontSize: 20),
+                        VerticalSpace(10),
+                        AppTextFormField(
+                          hintText: 'BS/MS in Computer Science',
+                          validator: (val) =>
+                              val.isEmpty ? "Field cannot be empty" : null,
+                          controller: _qualController,
+                        ),
+                        VerticalSpace(20),
+                        _getImagePicker(context),
+                        VerticalSpace(20),
+                        DynamicFontSize(label: 'Location', fontSize: 20),
+                        VerticalSpace(10),
+                        Container(
+                          height: 120,
+                          width: MediaQuery.of(context).size.width,
+                          child: GoogleMap(
+                            mapType: MapType.normal,
+                            initialCameraPosition: CameraPosition(
+                                zoom: 10,
+                                target: LatLng(
+                                  40.712776,
+                                  -74.005974,
+                                )),
+                            onMapCreated: (GoogleMapController controller) {
+                              _completer.complete(controller);
+                            },
+                          ),
+                        ),
+                        VerticalSpace(10),
+                        _getSubjectDropDown(context),
+                        // VerticalSpace(10),
+                        // Container(
+                        //   padding: const EdgeInsets.symmetric(
+                        //       horizontal: 10, vertical: 10),
+                        //   height: 100,
+                        //   width: double.infinity,
+                        //   decoration:
+                        //       BoxDecoration(color: Colors.grey.shade100),
+                        //   child: Column(
+                        //     children: [
+                        //       Align(
+                        //         alignment: Alignment.topRight,
+                        //         child: Container(
+                        //           height: 34,
+                        //           width: 34,
+                        //           decoration: BoxDecoration(
+                        //               shape: BoxShape.circle,
+                        //               color: AppColors()
+                        //                   .colorFromHex(context, '#3B7AF8')),
+                        //           child: Icon(
+                        //             Icons.add,
+                        //             color: Colors.white,
+                        //           ),
+                        //         ),
+                        //       ),
+                        //       Row(
+                        //         children: [
+                        //           Icon(Icons.picture_as_pdf,
+                        //               color: AppColors()
+                        //                   .colorFromHex(context, '#3B7AF8')),
+                        //           HorizontalSpace(10),
+                        //           DynamicFontSize(
+                        //             label: 'BS in computer science',
+                        //             fontSize: 18,
+                        //             fontWeight: FontWeight.normal,
+                        //           )
+                        //         ],
+                        //       )
+                        //     ],
+                        //   ),
+                        // ),
+                        VerticalSpace(20),
+                        AppButton(
+                          label: 'Register',
+                          colorText: '#3B7AF8',
+                          onTap: () {
+                            if (!_formKey.currentState.validate()) {
+                              return;
+                            }
+                            _signUpUser(
+                                signUp: signUp, user: user, context: context);
+                          },
+                        ),
+                        VerticalSpace(20),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  _signUpUser(
+      {BuildContext context,
+      @required SignUpBusinessLogic signUp,
+      @required User user}) {
+    _uploadFileServices.getUrl(context, file: _file).then((value) {
+      signUp
+          .registerNewTeacher(
+              email: _emailController.text,
+              password: _pwdController.text,
+              teacherModel: TeacherModel(
+                  name: _nameController.text,
+                  email: _emailController.text,
+                  password: _pwdController.text,
+                  lat: 12,
+                  lng: 12,
+                  role: "T",
+                  image: value,
+                  subjectID: _selectedSubject.subjectID,
+                  subjectName: _selectedSubject.subjectName,
+                  location: "Kohat",
+                  hourlyRate: _hourlyController.text,
+                  bio: _bioController.text,
+                  contactNo: _contactController.text,
+                  exp: _expController.text,
+                  qualification: _qualController.text),
+              context: context,
+              user: user)
+          .then((value) {
+        if (signUp.status == SignUpStatus.Registered) {
+          showNavigationDialog(context,
+              message:
+                  "Thanks for registration. Go to Login to access your dashboard.",
+              buttonText: "Go To Login", navigation: () {
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => LoginScreen()));
+          }, secondButtonText: "", showSecondButton: false);
+        } else if (signUp.status == SignUpStatus.Failed) {
+          showErrorDialog(context,
+              message: Provider.of<ErrorString>(context, listen: false)
+                  .getErrorString());
+        }
+      });
+    });
+  }
+
+  Widget _getSubjectDropDown(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30.0),
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Theme.of(context).primaryColor)),
+        child: FittedBox(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-
-
-              Container(
-                height: MediaQuery.of(context).size.height * 0.4,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage('assets/our-students.png'),
-                        fit: BoxFit.fill
-                    )
+              Padding(
+                padding: const EdgeInsets.only(left: 18.0),
+                child: Icon(
+                  Icons.room_preferences_outlined,
+                  color: Colors.grey[700],
+                  size: 27,
                 ),
               ),
-
-              VerticalSpace(20),
-
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    DynamicFontSize(label: 'Name:', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    AppTextFormField( hintText: 'Qalb E Abbas'),
-
-                    VerticalSpace(10),
-
-                    DynamicFontSize(label: 'Email:', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    AppTextFormField(hintText: 'qalbeabbas964@gmail.com'),
-
-                    VerticalSpace(10),
-
-
-                    DynamicFontSize(label: 'Password:', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    AppTextFormField( hintText: 'Enter Password'),
-
-                    VerticalSpace(10),
-
-
-                    DynamicFontSize(label: 'Confirm Password:', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    AppTextFormField( hintText: 'Re-enter Password'),
-
-                    VerticalSpace(10),
-
-
-                    DynamicFontSize(label: 'Qualification:', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    AppTextFormField( hintText: 'BS/MS in Computer Science'),
-
-                    VerticalSpace(20),
-
-                    DynamicFontSize(label: 'Location', fontSize: 20),
-
-                    VerticalSpace(10),
-
-                    Container(
-                      height: 120,
-                      width: MediaQuery.of(context).size.width,
-                      child: GoogleMap(
-                        mapType: MapType.normal,
-                        initialCameraPosition: CameraPosition(
-                          zoom: 10,
-                          target: LatLng(40.712776,  -74.005974,)
-                        ),
-                        onMapCreated: (GoogleMapController controller){
-                          _completer.complete(controller);
-                        },
-                      ),
-                    ),
-
-                    VerticalSpace(10),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      height: 100,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100
-                      ),
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.topRight,
-                             child: Container(
-                               height: 34,
-                               width: 34,
-                               decoration: BoxDecoration(
-                                 shape: BoxShape.circle,
-                                 color: AppColors().colorFromHex(context, '#3B7AF8')
-                               ),
-                               child: Icon(
-                                 Icons.add, color: Colors.white,
-                               ),
-                             ),
-                          ),
-
-                          Row(
-                            children: [
-                              Icon(Icons.picture_as_pdf,
-                                  color: AppColors().colorFromHex(context, '#3B7AF8')),
-                              HorizontalSpace(10),
-                              DynamicFontSize(label: 'BS in computer science',
-                                  fontSize: 18, fontWeight: FontWeight.normal,)
-
-                            ],
-                          )
-
-                        ],
-                      ),
-                    ),
-
-                    VerticalSpace(20),
-
-                    AppButton(label: 'Register', colorText: '#3B7AF8',),
-
-                    VerticalSpace(20),
-
-                  ],
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16, right: 16),
+                  child: DropdownButton<SubjectModel>(
+                    value: _selectedSubject,
+                    items: _subjectList.map((value) {
+                      return DropdownMenuItem<SubjectModel>(
+                        child: Text(value.subjectName),
+                        value: value,
+                      );
+                    }).toList(),
+                    onChanged: (item) {
+                      _selectedSubject = item;
+                      setState(() {});
+                    },
+                    underline: SizedBox(),
+                    hint: Text("Select Subject"),
+                    isExpanded: true,
+                  ),
                 ),
-              )
-
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _getImagePicker(BuildContext context) {
+    var status = Provider.of<AppState>(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: 60,
+        decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).primaryColor),
+            borderRadius: BorderRadius.circular(7)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.7,
+                child: Text(
+                  _file == null
+                      ? "Choose an Image..."
+                      : _file.path.split('/').last,
+                  style: Theme.of(context)
+                      .textTheme
+                      .caption
+                      .merge(TextStyle(color: Theme.of(context).primaryColor)),
+                ),
+              ),
+            ),
+            IconButton(
+                icon: Icon(
+                  Icons.attach_file,
+                  color: Theme.of(context).primaryColor,
+                ),
+                onPressed: () async {
+                  getFile(true);
+                })
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future getFile(bool gallery) async {
+    FilePickerResult result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      _file = File(result.files.single.path);
+    } else {
+      // User canceled the picker
+    }
+
+    setState(() {
+      if (_file != null) {
+        _file = File(_file.path);
+      } else {
+        print('No image selected.');
+      }
+    });
   }
 }
