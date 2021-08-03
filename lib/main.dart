@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sami_project/common/AppColors.dart';
-import 'package:sami_project/screens/AuthScreens/student_registration.dart';
+import 'package:sami_project/screens/bothApps.dart';
 
 import 'application/app_state.dart';
 import 'application/errorStrings.dart';
@@ -33,13 +33,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-          scaffoldBackgroundColor:
-              AppColors().colorFromHex(context, '#FFFFFF')),
-      home: StudentRegistration(),
-    );
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+            scaffoldBackgroundColor:
+                AppColors().colorFromHex(context, '#FFFFFF')),
+        home: BothApps());
   }
 }
 

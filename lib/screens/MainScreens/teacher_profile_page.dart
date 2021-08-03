@@ -6,6 +6,12 @@ import 'package:sami_project/infrastructure/models/teacherModel.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class ProfilePage extends StatefulWidget {
+  final String myID;
+  final bool isOutsideRoute;
+  final TeacherModel teacherModel;
+
+  ProfilePage({this.myID, this.isOutsideRoute = false, this.teacherModel});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -16,39 +22,51 @@ class _ProfilePageState extends State<ProfilePage> {
   final LocalStorage storage = new LocalStorage(BackEndConfigs.loginLocalDB);
   TeacherModel teacherModel = TeacherModel();
   bool initialized = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: FutureBuilder(
-            future: storage.ready,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (!initialized) {
+      body: FutureBuilder(
+          future: storage.ready,
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (!initialized) {
+              if (!widget.isOutsideRoute) {
                 var items =
                     storage.getItem(BackEndConfigs.teacherDetailsLocalStorage);
-
-                if (items != null) {
-                  print(items);
-                  teacherModel = TeacherModel(
-                    email: items['email'],
-                    name: items['name'],
-                    subjectName: items['subjectName'],
-                    hourlyRate: items['hourlyRate'],
-                    location: items['location'],
-                    bio: items['bio'],
-                    contactNo: items['contactNo'],
-                    exp: items['exp'],
-                    image: items['image'],
-                  );
-                }
-
-                initialized = true;
+                teacherModel = TeacherModel(
+                  email: items['email'],
+                  name: items['name'],
+                  subjectName: items['subjectName'],
+                  hourlyRate: items['hourlyRate'],
+                  location: items['location'],
+                  bio: items['bio'],
+                  contactNo: items['contactNo'],
+                  exp: items['exp'],
+                  image: items['image'],
+                  id: items['id'],
+                );
               }
-              return snapshot.data == null
-                  ? Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : _getUI(context);
-            }));
+
+              initialized = true;
+            }
+            return snapshot.data == null
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : _getUI(context);
+          }),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: Icon(Icons.chat),
+        onPressed: () {
+          // Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //         builder: (context) =>
+          //             ChatList(teacherModel.id, !widget.isOutsideRoute)));
+        },
+        label: Text("Chats"),
+      ),
+    );
   }
 
   Widget _getUI(BuildContext context) {
@@ -61,7 +79,9 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage(teacherModel.image),
+                image: NetworkImage(widget.isOutsideRoute
+                    ? widget.teacherModel.image ?? ""
+                    : teacherModel.image ?? ""),
                 fit: BoxFit.cover,
               ),
             ),
@@ -151,7 +171,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(
                     height: 8,
                   ),
-                  customContainer(teacherModel.bio),
+                  customContainer(widget.isOutsideRoute
+                      ? widget.teacherModel.bio
+                      : teacherModel.bio),
                   SizedBox(
                     height: 10,
                   ),
@@ -162,7 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(
                     height: 8,
                   ),
-                  customContainer(teacherModel.contactNo),
+                  customContainer(widget.isOutsideRoute
+                      ? widget.teacherModel.contactNo
+                      : teacherModel.contactNo),
                   SizedBox(
                     height: 10,
                   ),
@@ -173,7 +197,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(
                     height: 5,
                   ),
-                  customContainer('${teacherModel.exp} years'),
+                  customContainer(widget.isOutsideRoute
+                      ? '${widget.teacherModel.exp} years'
+                      : '${teacherModel.exp} years'),
                 ],
               ),
             ),
@@ -212,30 +238,40 @@ class _ProfilePageState extends State<ProfilePage> {
             width: 16,
           ),
         ),
-        Expanded(
-          child: Container(
-            alignment: Alignment.center,
-            child: SizedBox(
-              width: _isOpen
-                  ? (MediaQuery.of(context).size.width - (2 * hPadding)) / 1.6
-                  : double.infinity,
-              child: FlatButton(
-                onPressed: () => print('Message tapped'),
-                color: AppColors().colorFromHex(context, '#3B7AF8'),
-                textColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)),
-                child: Text(
-                  'MESSAGE',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+        if (widget.isOutsideRoute)
+          Expanded(
+            child: Container(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: _isOpen
+                    ? (MediaQuery.of(context).size.width - (2 * hPadding)) / 1.6
+                    : double.infinity,
+                child: FlatButton(
+                  onPressed: () {
+                    print(widget.teacherModel.id);
+                    print(widget.myID);
+                    // Navigator.of(context).push(MaterialPageRoute(
+                    //     builder: (builder) => ChatScreen(
+                    //         sendToID: widget.teacherModel.id,
+                    //         userID: widget.myID,
+                    //         isTeacher: false,
+                    //         sendByID: widget.myID)));
+                  },
+                  color: AppColors().colorFromHex(context, '#3B7AF8'),
+                  textColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
+                  child: Text(
+                    'MESSAGE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -252,13 +288,10 @@ class _ProfilePageState extends State<ProfilePage> {
           color: Colors.grey,
         ),
         _infoCell(
-            title: 'Hourly Rate', value: "PKR ${teacherModel.hourlyRate}"),
-        Container(
-          width: 1,
-          height: 40,
-          color: Colors.grey,
-        ),
-        _infoCell(title: 'Location', value: teacherModel.location),
+            title: 'Hourly Rate',
+            value: widget.isOutsideRoute
+                ? "PKR ${widget.teacherModel.hourlyRate}"
+                : "PKR ${teacherModel.hourlyRate}"),
       ],
     );
   }
@@ -293,7 +326,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       children: <Widget>[
         Text(
-          teacherModel.name ?? "",
+          widget.isOutsideRoute
+              ? widget.teacherModel.name
+              : teacherModel.name ?? "",
           style: TextStyle(
             fontFamily: 'NimbusSanL',
             fontWeight: FontWeight.w700,
@@ -304,7 +339,9 @@ class _ProfilePageState extends State<ProfilePage> {
           height: 8,
         ),
         Text(
-          teacherModel.subjectName ?? "",
+          widget.isOutsideRoute
+              ? widget.teacherModel.subjectName
+              : teacherModel.subjectName ?? "",
           style: TextStyle(
             fontFamily: 'NimbusSanL',
             fontStyle: FontStyle.italic,

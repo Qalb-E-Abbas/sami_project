@@ -10,6 +10,7 @@ import 'package:sami_project/infrastructure/services/updateLocalStorageServices.
 class UserServices {
   ///Instantiate LocalDB
   final LocalStorage storage = new LocalStorage(BackEndConfigs.loginLocalDB);
+
   // UserModel _bikerModel = UserModel();
   //
   // UserModel get bikerModel => _bikerModel;
@@ -51,5 +52,27 @@ class UserServices {
         .doc(docID)
         .snapshots()
         .map((snap) => StudentModel.fromJson(snap.data()));
+  }
+
+  ///Stream ALl Teachers
+  Stream<List<TeacherModel>> getAllTeachers(
+    BuildContext context,
+  ) {
+    return _teRef.snapshots().map((snap) =>
+        snap.docs.map((e) => TeacherModel.fromJson(e.data())).toList());
+  }
+
+  ///Go Offline/Online Teachers
+  Future<void> changeOnlineStatusTeacher({String docID, bool isOnline}) async {
+    // await _teRef.doc(docID).update({
+    //   'isOnline': isOnline,
+    // });
+  }
+
+  ///Go Offline/Online Teachers
+  Future<void> changeOnlineStatusStudents({String docID, bool isOnline}) async {
+    // await _stdRef.doc(docID).update({
+    //   'isOnline': isOnline,
+    // });
   }
 }

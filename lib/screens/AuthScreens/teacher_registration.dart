@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:provider/provider.dart';
@@ -54,8 +55,35 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
     SubjectModel(subjectID: "3", subjectName: "Physics"),
   ];
 
+  bool isLoading = false;
+
+  LatLng _center;
+  Position currentLocation;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserLocation();
+  }
+
+  Future<Position> locateUser() async {
+    return Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+  }
+
+  getUserLocation() async {
+    locateUser().then((value) => print(value.longitude));
+    currentLocation = await locateUser();
+    setState(() {
+      _center = LatLng(currentLocation.latitude, currentLocation.longitude);
+    });
+    print('center $_center');
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(_center);
     AuthServices users = Provider.of<AuthServices>(context);
     SignUpBusinessLogic signUp = Provider.of<SignUpBusinessLogic>(context);
     var user = Provider.of<User>(context);
@@ -63,7 +91,7 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
       backgroundColor: AppColors.scaffoldBackgroundColor,
       body: SafeArea(
         child: LoadingOverlay(
-          isLoading: signUp.status == SignUpStatus.Registering,
+          isLoading: isLoading,
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -175,25 +203,7 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
                         ),
                         VerticalSpace(20),
                         _getImagePicker(context),
-                        VerticalSpace(20),
-                        DynamicFontSize(label: 'Location', fontSize: 20),
-                        VerticalSpace(10),
-                        Container(
-                          height: 120,
-                          width: MediaQuery.of(context).size.width,
-                          child: GoogleMap(
-                            mapType: MapType.normal,
-                            initialCameraPosition: CameraPosition(
-                                zoom: 10,
-                                target: LatLng(
-                                  40.712776,
-                                  -74.005974,
-                                )),
-                            onMapCreated: (GoogleMapController controller) {
-                              _completer.complete(controller);
-                            },
-                          ),
-                        ),
+
                         VerticalSpace(10),
                         _getSubjectDropDown(context),
                         // VerticalSpace(10),
@@ -245,11 +255,22 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
                             if (!_formKey.currentState.validate()) {
                               return;
                             }
+                            isLoading = true;
+                            setState(() {});
                             _signUpUser(
                                 signUp: signUp, user: user, context: context);
                           },
                         ),
                         VerticalSpace(20),
+                        RaisedButton(
+                            child: Text("Go to login"),
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          TeacherLoginScreen()));
+                            })
                       ],
                     ),
                   )
@@ -275,13 +296,13 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
                   name: _nameController.text,
                   email: _emailController.text,
                   password: _pwdController.text,
-                  lat: 12,
-                  lng: 12,
+                  lat: _center.latitude,
+                  lng: _center.longitude,
                   role: "T",
                   image: value,
                   subjectID: _selectedSubject.subjectID,
                   subjectName: _selectedSubject.subjectName,
-                  location: "Kohat",
+                  location: "",
                   hourlyRate: _hourlyController.text,
                   bio: _bioController.text,
                   contactNo: _contactController.text,
@@ -291,12 +312,14 @@ class _TeacherRegistrationState extends State<TeacherRegistration> {
               user: user)
           .then((value) {
         if (signUp.status == SignUpStatus.Registered) {
+          isLoading = false;
+          setState(() {});
           showNavigationDialog(context,
               message:
                   "Thanks for registration. Go to Login to access your dashboard.",
               buttonText: "Go To Login", navigation: () {
             Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => LoginScreen()));
+                MaterialPageRoute(builder: (context) => TeacherLoginScreen()));
           }, secondButtonText: "", showSecondButton: false);
         } else if (signUp.status == SignUpStatus.Failed) {
           showErrorDialog(context,

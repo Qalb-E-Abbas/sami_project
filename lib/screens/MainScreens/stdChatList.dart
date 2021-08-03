@@ -9,12 +9,11 @@ import 'package:sami_project/common/dynamicFontSize.dart';
 import 'package:sami_project/common/horizontal_sized_box.dart';
 import 'package:sami_project/common/vertical_sized_box.dart';
 import 'package:sami_project/infrastructure/models/messagesModel.dart';
-import 'package:sami_project/infrastructure/models/teacherModel.dart';
 import 'package:sami_project/infrastructure/models/userModel.dart';
 import 'package:sami_project/infrastructure/services/chatServices.dart';
 import 'package:sami_project/infrastructure/services/user_services.dart';
 
-class ChatScreen extends StatefulWidget {
+class TeacherChatScreen extends StatefulWidget {
   final String sendToID;
   final String sendByID;
   final String chatID;
@@ -22,7 +21,7 @@ class ChatScreen extends StatefulWidget {
   final String userID;
   final bool isTeacher;
 
-  ChatScreen(
+  TeacherChatScreen(
       {this.sendToID,
       this.sendByID,
       this.chatID,
@@ -31,10 +30,10 @@ class ChatScreen extends StatefulWidget {
       this.isTeacher});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  _TeacherChatScreenState createState() => _TeacherChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _TeacherChatScreenState extends State<TeacherChatScreen> {
   ChatBusinessLogic _chatLogic = ChatBusinessLogic();
   ChatServices _advisorChatServices = ChatServices();
 
@@ -52,38 +51,38 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     // TODO: implement dispose
-    // if (widget.messages != null)
-    //   widget.messages.map((e) {
-    //     _advisorChatServices.markMessageAsRead(
-    //         context, getChatID(), widget.userID);
-    //   }).toList();
-    // if (widget.isTeacher)
-    //   _userServices.changeOnlineStatusTeacher(
-    //       docID: widget.userID, isOnline: false);
-    // if (!widget.isTeacher)
-    //   _userServices.changeOnlineStatusStudents(
-    //       docID: widget.userID, isOnline: false);
+    if (widget.messages != null)
+      widget.messages.map((e) {
+        _advisorChatServices.markMessageAsRead(
+            context, getChatID(), widget.userID);
+      }).toList();
+    if (widget.isTeacher)
+      _userServices.changeOnlineStatusTeacher(
+          docID: widget.userID, isOnline: false);
+    if (!widget.isTeacher)
+      _userServices.changeOnlineStatusStudents(
+          docID: widget.userID, isOnline: false);
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    // if (widget.messages != null)
-    //   widget.messages.map((e) {
-    //     _advisorChatServices.markMessageAsRead(context, getChatID(), e.docID);
-    //   }).toList();
+    if (widget.messages != null)
+      widget.messages.map((e) {
+        _advisorChatServices.markMessageAsRead(context, getChatID(), e.docID);
+      }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    print("CHAT ID: ${getChatID()}");
-    // if (widget.isTeacher)
-    //   _userServices.changeOnlineStatusTeacher(
-    //       docID: widget.userID, isOnline: true);
-    // if (!widget.isTeacher)
-    //   _userServices.changeOnlineStatusStudents(
-    //       docID: widget.userID, isOnline: true);
+    print("CHAT ID: ${widget.userID}");
+    if (widget.isTeacher)
+      _userServices.changeOnlineStatusTeacher(
+          docID: widget.userID, isOnline: true);
+    if (!widget.isTeacher)
+      _userServices.changeOnlineStatusStudents(
+          docID: widget.userID, isOnline: true);
     return Scaffold(
       backgroundColor: Color(0xffF6F6F6),
       body: FutureBuilder(
@@ -92,13 +91,24 @@ class _ChatScreenState extends State<ChatScreen> {
             if (!initialized) {
               var items =
                   storage.getItem(BackEndConfigs.userDetailsLocalStorage);
-              print("HI ITEMS : $items");
+              var std =
+                  storage.getItem(BackEndConfigs.teacherDetailsLocalStorage);
+              print(items);
+              print(std);
               if (items != null) {
                 userModel = StudentModel(
                   id: items['id'],
                   name: items['name'],
                   isOnline: items['isOnline'],
                   email: items['email'],
+                );
+              }
+              if (std != null) {
+                userModel = StudentModel(
+                  id: std['id'],
+                  name: std['name'],
+                  isOnline: std['isOnline'],
+                  email: std['email'],
                 );
               }
 
@@ -116,9 +126,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _getUI(BuildContext context) {
     print("IDS : ${userModel.id}");
     return StreamProvider.value(
-      value: _userServices.streamTeacherData(widget.sendToID),
+      value: _userServices.streamStudentsData(getMyID()),
       builder: (ctxt, child) {
-        return (ctxt.watch<TeacherModel>() == null
+        return (ctxt.watch<StudentModel>() == null
             ? Center(
                 child: CircularProgressIndicator(),
               )
@@ -175,7 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           children: [
                                             DynamicFontSize(
                                               label: ctxt
-                                                  .watch<TeacherModel>()
+                                                  .watch<StudentModel>()
                                                   .name,
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
@@ -183,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             VerticalSpace(2),
                                             DynamicFontSize(
                                               label: ctxt
-                                                      .watch<TeacherModel>()
+                                                      .watch<StudentModel>()
                                                       .isOnline
                                                   ? "Online"
                                                   : "Offline",
@@ -236,21 +246,21 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 .watch<List<MessagesModel>>()
                                                 .length,
                                             itemBuilder: (context, i) {
-                                              // if (markReadMsjContext.watch<
-                                              //         List<MessagesModel>>() !=
-                                              //     null) if (markReadMsjContext.watch<List<MessagesModel>>().isNotEmpty)
-                                              //   markReadMsjContext
-                                              //       .watch<
-                                              //           List<MessagesModel>>()
-                                              //       .map((e) =>
-                                              //           // print(e.messageBody)
-                                              //           _advisorChatServices
-                                              //               .markMessageAsRead(
-                                              //             context,
-                                              //             getChatID(),
-                                              //             widget.userID,
-                                              //           ))
-                                              //       .toList();
+                                              if (markReadMsjContext.watch<
+                                                      List<MessagesModel>>() !=
+                                                  null) if (markReadMsjContext.watch<List<MessagesModel>>().isNotEmpty)
+                                                markReadMsjContext
+                                                    .watch<
+                                                        List<MessagesModel>>()
+                                                    .map((e) =>
+                                                        // print(e.messageBody)
+                                                        _advisorChatServices
+                                                            .markMessageAsRead(
+                                                          context,
+                                                          getChatID(),
+                                                          widget.userID,
+                                                        ))
+                                                    .toList();
 
                                               return MessageTile(
                                                 message: msjContext
@@ -319,7 +329,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                             duration:
                                                 Duration(milliseconds: 700),
                                             curve: Curves.ease));
-
                                     _chatLogic
                                         .initChat(context,
                                             chatID: getChatID(),

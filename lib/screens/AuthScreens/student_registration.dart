@@ -13,7 +13,7 @@ import 'package:sami_project/common/textfromfield.dart';
 import 'package:sami_project/common/vertical_sized_box.dart';
 import 'package:sami_project/infrastructure/models/userModel.dart';
 import 'package:sami_project/infrastructure/services/authServices.dart';
-import 'package:sami_project/screens/AuthScreens/login_screen.dart';
+import 'package:sami_project/screens/AuthScreens/studentLogin.dart';
 
 class StudentRegistration extends StatefulWidget {
   const StudentRegistration({Key key}) : super(key: key);
@@ -30,6 +30,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _addController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
       backgroundColor: AppColors.scaffoldBackgroundColor,
       body: SafeArea(
         child: LoadingOverlay(
-          isLoading: signUp.status == SignUpStatus.Registering,
+          isLoading: isLoading,
           child: SingleChildScrollView(
             child: Form(
               key: _formKey,
@@ -122,6 +123,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                             if (!_formKey.currentState.validate()) {
                               return;
                             }
+
                             _signUpUser(
                                 signUp: signUp, user: user, context: context);
                           },
@@ -143,6 +145,8 @@ class _StudentRegistrationState extends State<StudentRegistration> {
       {BuildContext context,
       @required SignUpBusinessLogic signUp,
       @required User user}) {
+    isLoading = true;
+    setState(() {});
     signUp
         .registerNewStudent(
             email: _emailController.text,
@@ -158,12 +162,14 @@ class _StudentRegistrationState extends State<StudentRegistration> {
             user: user)
         .then((value) {
       if (signUp.status == SignUpStatus.Registered) {
+        isLoading = false;
+        setState(() {});
         showNavigationDialog(context,
             message:
                 "Thanks for registration. Go to Login to access your dashboard.",
             buttonText: "Go To Login", navigation: () {
           Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => LoginScreen()));
+              context, MaterialPageRoute(builder: (context) => StudentLogin()));
         }, secondButtonText: "", showSecondButton: false);
       } else if (signUp.status == SignUpStatus.Failed) {
         showErrorDialog(context,

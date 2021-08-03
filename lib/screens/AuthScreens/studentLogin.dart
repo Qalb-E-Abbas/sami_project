@@ -13,23 +13,23 @@ import 'package:sami_project/common/horizontal_sized_box.dart';
 import 'package:sami_project/common/textfromfield.dart';
 import 'package:sami_project/common/vertical_sized_box.dart';
 import 'package:sami_project/infrastructure/services/authServices.dart';
-import 'package:sami_project/screens/MainScreens/teacher_profile_page.dart';
+import 'package:sami_project/screens/AuthScreens/student_registration.dart';
+import 'package:sami_project/screens/MainScreens/mapHomePage.dart';
 
-class TeacherLoginScreen extends StatefulWidget {
-  const TeacherLoginScreen({Key key}) : super(key: key);
+class StudentLogin extends StatefulWidget {
+  const StudentLogin({Key key}) : super(key: key);
 
   @override
-  _TeacherLoginScreenState createState() => _TeacherLoginScreenState();
+  _StudentLoginState createState() => _StudentLoginState();
 }
 
-class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
+class _StudentLoginState extends State<StudentLogin> {
   TextEditingController _emailController = TextEditingController();
 
   TextEditingController _pwdController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   var node;
-  bool isLoading = false;
 
   LoginBusinessLogic data = LoginBusinessLogic();
   bool isVisible = false;
@@ -97,8 +97,6 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                                 return;
                               }
 
-                              print("HI I AM CALLED");
-
                               loginUser(
                                   context: context,
                                   data: data,
@@ -118,7 +116,13 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                                 label: 'Don\'t have an account?', fontSize: 18),
                             HorizontalSpace(6),
                             InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            StudentRegistration()));
+                              },
                               child: DynamicFontSize(
                                 label: 'Register',
                                 fontSize: 18,
@@ -148,7 +152,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
       @required AuthServices auth,
       @required String password}) {
     data
-        .teacherLoginUserLogic(
+        .loginUserLogic(
       context,
       email: email,
       password: password,
@@ -161,7 +165,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
             pageBuilder: (_, animation, __) {
               return ScaleTransition(
                 scale: animation,
-                child: ProfilePage(),
+                child: MapHomePage(),
               );
             }));
       } else {

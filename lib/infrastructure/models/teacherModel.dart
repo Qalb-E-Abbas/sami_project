@@ -4,8 +4,8 @@ class TeacherModel {
   String email;
   String password;
   String qualification;
-  double lat;
-  double lng;
+  var lat;
+  var lng;
   String subjectID;
   String subjectName;
   String role;
@@ -15,6 +15,7 @@ class TeacherModel {
   String exp;
   String contactNo;
   String bio;
+  bool isOnline;
 
   TeacherModel(
       {this.name,
@@ -23,6 +24,7 @@ class TeacherModel {
       this.password,
       this.qualification,
       this.lat,
+      this.isOnline,
       this.role,
       this.lng,
       this.subjectName,
@@ -51,11 +53,12 @@ class TeacherModel {
     image = json['image'];
     exp = json['exp'];
     contactNo = json['contactNo'];
+    isOnline = json['isOnline'];
   }
 
   Map<String, dynamic> toJson(String id) {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['name'] = id;
+    data['id'] = id;
     data['name'] = this.name;
     data['email'] = this.email;
     data['password'] = this.password;
