@@ -45,6 +45,18 @@ class UserServices {
         .map((snap) => TeacherModel.fromJson(snap.data()));
   }
 
+  Stream<List<TeacherModel>> streamTeachersViaSubject(String subject) {
+    return _teRef.where('subjectName', isEqualTo: subject).snapshots().map(
+        (event) =>
+            event.docs.map((e) => TeacherModel.fromJson(e.data())).toList());
+  }
+
+  Stream<List<TeacherModel>> streamTeachersViaLocation(String location) {
+    return _teRef.where('location', isEqualTo: location).snapshots().map(
+        (event) =>
+            event.docs.map((e) => TeacherModel.fromJson(e.data())).toList());
+  }
+
   ///Stream a Students
   Stream<StudentModel> streamStudentsData(String docID) {
     print("I am $docID");

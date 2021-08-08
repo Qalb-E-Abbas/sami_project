@@ -32,6 +32,100 @@ class MapHomePageState extends State<MapHomePage> {
     super.initState();
   }
 
+  Widget _subjectPopup(BuildContext context) => Container(
+        height: 20,
+        child: PopupMenuButton<int>(
+          onSelected: (val) {
+            if (val == 4) {
+              i = 4;
+            } else if (val == 5) {
+              i = 5;
+            }
+            setState(() {});
+          },
+          padding: EdgeInsets.all(0),
+          icon: Icon(
+            Icons.filter_list,
+            size: 19,
+          ),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 4,
+              child: Text("Maths"),
+            ),
+            PopupMenuItem(
+              value: 5,
+              child: Text("Computer"),
+            ),
+          ],
+        ),
+      );
+  int i = 0;
+  Widget _locationPopup(BuildContext context) => Container(
+        height: 20,
+        child: PopupMenuButton<int>(
+          onSelected: (val) {
+            if (val == 0) {
+              i = 0;
+            } else if (val == 1) {
+              i = 1;
+            } else if (val == 2) {
+              i = 2;
+            } else if (val == 3) {
+              i = 3;
+            } else if (val == 6) {
+              i = 6;
+            }
+            setState(() {});
+          },
+          padding: EdgeInsets.all(0),
+          icon: Icon(
+            Icons.location_on,
+            size: 19,
+          ),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 0,
+              child: Text("All Teachers"),
+            ),
+            PopupMenuItem(
+              value: 1,
+              child: Text("From Kohat"),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Text("From Peshawar"),
+            ),
+            PopupMenuItem(
+              value: 3,
+              child: Text("From Islamabad"),
+            ),
+            PopupMenuItem(
+              value: 4,
+              child: Text("From Lahore"),
+            ),
+          ],
+        ),
+      );
+
+  Stream<List<TeacherModel>> _getStream(int i) {
+    if (i == 0) {
+      return _userServices.getAllTeachers(context);
+    } else if (i == 1) {
+      return _userServices.streamTeachersViaLocation("Peshawar");
+    } else if (i == 2) {
+      return _userServices.streamTeachersViaLocation("Islamabad");
+    } else if (i == 3) {
+      return _userServices.streamTeachersViaLocation("Lahore");
+    } else if (i == 4) {
+      return _userServices.streamTeachersViaSubject("Maths");
+    } else if (i == 5) {
+      return _userServices.streamTeachersViaSubject("Computer");
+    } else if (i == 6) {
+      return _userServices.streamTeachersViaLocation("Kohat");
+    }
+  }
+
   double zoomVal = 5.0;
 
   @override
@@ -41,9 +135,10 @@ class MapHomePageState extends State<MapHomePage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text("Google Map"),
+        actions: [_subjectPopup(context), _locationPopup(context)],
       ),
       body: StreamProvider.value(
-        value: _userServices.getAllTeachers(context),
+        value: _getStream(i),
         builder: (context, child) {
           if (context.read<List<TeacherModel>>() != null) if (marker.length <
               context.read<List<TeacherModel>>().length)

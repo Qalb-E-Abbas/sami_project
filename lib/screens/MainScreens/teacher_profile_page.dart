@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
+import 'package:sami_project/application/call_launcher.dart';
+import 'package:sami_project/application/launch_whatsapp.dart';
+import 'package:sami_project/application/sms_sender.dart';
 import 'package:sami_project/common/AppColors.dart';
 import 'package:sami_project/common/back_end_configs.dart';
 import 'package:sami_project/infrastructure/models/teacherModel.dart';
@@ -55,16 +58,33 @@ class _ProfilePageState extends State<ProfilePage> {
                   )
                 : _getUI(context);
           }),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: Icon(Icons.chat),
-        onPressed: () {
-          // Navigator.push(
-          //     context,
-          //     MaterialPageRoute(
-          //         builder: (context) =>
-          //             ChatList(teacherModel.id, !widget.isOutsideRoute)));
-        },
-        label: Text("Chats"),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            icon: Icon(Icons.whatshot),
+            onPressed: () {
+              launchWhatsApp(
+                  phone: widget.isOutsideRoute
+                      ? widget.teacherModel.contactNo
+                      : teacherModel.contactNo,
+                  message: "Write your own message....",
+                  context: context);
+            },
+            label: Text("Chats"),
+          ),
+          FloatingActionButton.extended(
+            icon: Icon(Icons.call),
+            onPressed: () {
+              launchCall(
+                widget.isOutsideRoute
+                    ? widget.teacherModel.contactNo
+                    : teacherModel.contactNo,
+              );
+            },
+            label: Text("Chats"),
+          ),
+        ],
       ),
     );
   }
@@ -250,12 +270,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   onPressed: () {
                     print(widget.teacherModel.id);
                     print(widget.myID);
-                    // Navigator.of(context).push(MaterialPageRoute(
-                    //     builder: (builder) => ChatScreen(
-                    //         sendToID: widget.teacherModel.id,
-                    //         userID: widget.myID,
-                    //         isTeacher: false,
-                    //         sendByID: widget.myID)));
+                    smsSender(
+                        phone: widget.isOutsideRoute
+                            ? widget.teacherModel.contactNo
+                            : teacherModel.contactNo,
+                        message: "Write your custom message...");
                   },
                   color: AppColors().colorFromHex(context, '#3B7AF8'),
                   textColor: Colors.white,
